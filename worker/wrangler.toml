@@ -1,0 +1,18 @@
+# Cloudflare Worker that receives Telegram webhooks for JobBot.
+# Secrets are NOT stored here. Set them with `npx wrangler secret put NAME` (see docs/worker.md).
+name = "jobbot"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+GITHUB_REPO = "JoseSholly/jobbot"   # owner/repo that holds the build_profile workflow
+GITHUB_REF = "main"                 # branch the workflow file lives on (the default branch)
+GEMINI_MODEL = "gemini-2.5-flash"
+MAX_USERS = "50"                    # cap on active users (protects free-tier quotas)
+DEFAULT_NG_QUOTA = "4"
+DEFAULT_GLOBAL_QUOTA = "6"
+
+# Secrets (wrangler secret put ...):
+#   TELEGRAM_BOT_TOKEN, WEBHOOK_SECRET, DATABASE_URL, ADMIN_CHAT_ID,
+#   GITHUB_TOKEN (fine-grained PAT, Actions: read & write), GEMINI_API_KEY (optional)
