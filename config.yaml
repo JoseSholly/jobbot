@@ -1,0 +1,72 @@
+# JobBot configuration. Secrets live in environment variables / GitHub secrets, never here.
+# See docs/configuration.md for every option.
+
+digest:
+  timezone: Africa/Lagos        # WAT; used to label morning/evening runs
+  default_ng_quota: 4           # Nigerian jobs per message (users can change with /split)
+  default_global_quota: 6       # international/remote jobs per message
+  min_score: 50                 # drop anything below this (0-100)
+  max_age_days: 14              # ignore jobs posted earlier than this
+  send_delay_seconds: 0.5       # pause between users (Telegram rate limits)
+
+scoring:
+  weights:                      # must sum to 1.0
+    semantic: 0.60
+    skills: 0.25
+    title: 0.10
+    recency: 0.05
+  semantic_floor: 0.15          # cosine at/below this maps to 0
+  semantic_ceiling: 0.65        # cosine at/above this maps to 1
+  skill_saturation: 5           # matching this many of the user's skills = full skill score
+  feedback_max_adjust: 10       # +/- points from Save/Dismiss history
+  feedback_min_events: 1        # need at least this many feedback events to re-rank
+
+embedding:
+  model: sentence-transformers/all-MiniLM-L6-v2
+
+retention:
+  sent_days: 60                 # forget sent jobs after this many days
+  jobs_days: 90                 # drop cached job rows (unless saved) after this
+
+llm:
+  model: gemini-2.5-flash
+  match_reasons: true           # one-line "why it matches" per job (needs GEMINI_API_KEY)
+  max_reason_users_per_run: 50  # stay inside the Gemini free-tier rate limit
+
+search:
+  max_keywords: 12              # cap on distinct search terms sent to query-style sources
+
+http:
+  timeout_seconds: 30
+  user_agent: "JobBot/0.1 (+https://github.com/JoseSholly/jobbot)"
+  scraper_delay_seconds: 2.0    # politeness delay between scraper requests
+
+sources:
+  remotive:       {enabled: true}
+  remoteok:       {enabled: true}
+  himalayas:      {enabled: true, max_pages: 10}
+  arbeitnow:      {enabled: true, max_pages: 3}
+  jobicy:         {enabled: true, count: 100}
+  weworkremotely:
+    enabled: true
+    feeds:
+      - https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss
+      - https://weworkremotely.com/categories/remote-front-end-programming-jobs.rss
+      - https://weworkremotely.com/categories/remote-full-stack-programming-jobs.rss
+      - https://weworkremotely.com/categories/remote-devops-sysadmin-jobs.rss
+      - https://weworkremotely.com/categories/remote-design-jobs.rss
+      - https://weworkremotely.com/categories/remote-product-jobs.rss
+      - https://weworkremotely.com/categories/remote-customer-support-jobs.rss
+      - https://weworkremotely.com/categories/remote-sales-and-marketing-jobs.rss
+  jooble:         {enabled: true, pages_per_keyword: 1}   # needs JOOBLE_API_KEY
+  # Scrapers: check robots.txt / terms before enabling. Isolated: if one breaks, the run continues.
+  myjobmag:       {enabled: false, pages_per_keyword: 1}
+  jobberman:      {enabled: false, pages_per_keyword: 1}
+  ats:
+    enabled: true
+    # Public job-board JSON of hand-picked companies. The value is the board token from the
+    # company's careers URL, e.g. boards.greenhouse.io/<token>, jobs.lever.co/<token>,
+    # jobs.ashbyhq.com/<token>. Unknown tokens are logged and skipped.
+    greenhouse: [gitlab]
+    lever: []
+    ashby: []

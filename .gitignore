@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Secrets and personal data (never commit CVs or profiles)
+.env
+.env.*
+!.env.example
+*.pdf
+profile.json
+
+# Worker
+worker/node_modules/
+worker/.wrangler/
+worker/.dev.vars
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store

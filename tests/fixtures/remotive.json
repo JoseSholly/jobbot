@@ -1,0 +1,4 @@
+{"job-count": 2, "jobs": [
+ {"id": 1, "url": "https://remotive.com/remote-jobs/software-dev/senior-python-engineer-1?utm_source=x", "title": "Senior Python Engineer", "company_name": "Acme &amp; Co", "category": "Software Development", "publication_date": "2026-09-30T10:00:00", "candidate_required_location": "Worldwide", "description": "<p>Build APIs with <b>Django</b> and PostgreSQL.</p><ul><li>Docker</li></ul>"},
+ {"id": 2, "url": "https://remotive.com/remote-jobs/software-dev/frontend-dev-2", "title": "Frontend Developer", "company_name": "Beta", "publication_date": "2026-09-29T08:00:00", "candidate_required_location": "USA Only", "description": "<p>React and TypeScript.</p>"}
+]}
