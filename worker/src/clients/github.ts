@@ -8,7 +8,9 @@ export class GitHubClient {
   ) {}
 
   async dispatch(workflowFile: string, inputs: Record<string, string>): Promise<void> {
-    const res = await this.fetchFn(
+    // Call fetch detached from `this`: Workers throw "Illegal invocation" otherwise.
+    const doFetch = this.fetchFn;
+    const res = await doFetch(
       `https://api.github.com/repos/${this.repo}/actions/workflows/${workflowFile}/dispatches`,
       {
         method: "POST",

@@ -7,7 +7,9 @@ export class GeminiClient {
   ) {}
 
   async generate(prompt: string, temperature = 0.4): Promise<string> {
-    const res = await this.fetchFn(
+    // Call fetch detached from `this`: Workers throw "Illegal invocation" otherwise.
+    const doFetch = this.fetchFn;
+    const res = await doFetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`,
       {
         method: "POST",
