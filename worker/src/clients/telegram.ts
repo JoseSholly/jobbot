@@ -5,7 +5,8 @@ export class TelegramClient {
   constructor(private readonly token: string, private readonly fetchFn: typeof fetch = fetch) {}
 
   async call<T = unknown>(method: string, payload: Record<string, unknown>): Promise<T> {
-    const res = await this.fetchFn(`https://api.telegram.org/bot${this.token}/${method}`, {
+    const doFetch = this.fetchFn;
+    const res = await doFetch(`https://api.telegram.org/bot${this.token}/${method}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),

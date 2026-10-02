@@ -1,33 +1,41 @@
 import type { Profile } from "../domain";
 import { esc, truncate } from "../util/text";
 
-export const HELP = `<b>JobBot</b> sends you 10 CV-matched jobs at 07:00 and 17:00 (WAT).
+export const HELP = `<b>JobBot</b> delivers 10 CV-matched jobs at 07:00 and 17:00 WAT.
 
 <b>Get started</b>
-• Send your CV as a <b>PDF</b>. I'll build your profile in about 2 minutes.
+Send your CV as a <b>PDF</b>. I'll build your profile in about 2 minutes.
 
-<b>Your profile</b>
-/profile: show it
-/titles Backend Engineer, Python Developer: set the job titles to search
-/skills add Docker, AWS · /skills remove PHP · /skills set …
-/exclude add unpaid, crypto · /exclude remove … · /exclude set …
-/locations Nigeria, Worldwide, Africa, EMEA: places you can work from/in
-/seniority mid, senior
-/remote on|off: include remote jobs
-/summary &lt;2-3 sentences about you&gt;
+<b>Profile</b>
+/profile — view your profile
+/titles — set target job titles
+   <code>/titles Backend Engineer, Python Developer</code>
+/skills — <code>add</code>, <code>remove</code>, or <code>set</code>
+   <code>/skills add Docker, AWS</code>
+/exclude — filter out keywords
+   <code>/exclude add unpaid, crypto</code>
+/locations — where you can work
+   <code>/locations Nigeria, Worldwide, EMEA</code>
+/seniority — <code>/seniority mid, senior</code>
+/remote — <code>/remote on</code> or <code>/remote off</code>
+/summary — a 2-3 sentence intro about you
 
-<b>Your digest</b>
-/split 4 6: Nigerian vs international jobs per message
-/saved: jobs you saved with 💾
-/pause · /resume
-/delete: delete all your data
+<b>Digest</b>
+/split — Nigerian vs international split
+   <code>/split 4 6</code>
+/saved — jobs you've saved
+/pause — stop the digest
+/resume — resume the digest
+/delete — remove all your data
 
-Buttons under each job: 💾 save · ✖ not for me (fewer like it) · ✍ tailored CV bullets.`;
+<b>Under each job</b>
+💾 Save · ✖ Not for me · ✍ Tailor bullets`;
 
 export const ADMIN_HELP = `<b>Admin</b>
-/invite [uses] [days]: create an invite code (default 1 use, 14 days)
-/users: list users
-/approve &lt;chat_id&gt; · /block &lt;chat_id&gt;`;
+/invite [uses] [days] — create an invite (default 1 use, 14 days)
+/users — list users
+/approve &lt;chat_id&gt; — approve a user
+/block &lt;chat_id&gt; — block a user`;
 
 export const PRIVACY = `<i>Privacy: your CV text and profile are stored in the bot's database to match jobs. ` +
   `If the operator enabled Gemini, CV text is sent to Google's Gemini API for parsing and tailoring. ` +
