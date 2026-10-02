@@ -1,0 +1,82 @@
+name: Digest
+
+on:
+  schedule:
+    - cron: "0 6 * * *"    # 07:00 WAT (GitHub may start a few minutes late)
+    - cron: "0 16 * * *"   # 17:00 WAT
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: "Digest slot"
+        type: choice
+        options: [auto, morning, evening]
+        default: auto
+      user:
+        description: "Only this chat_id (blank = everyone)"
+        required: false
+        default: ""
+      dry_run:
+        description: "Print instead of sending"
+        type: boolean
+        default: false
+
+concurrency:
+  group: digest
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      ADMIN_CHAT_ID: ${{ secrets.ADMIN_CHAT_ID }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      FASTEMBED_CACHE_PATH: ${{ github.workspace }}/.cache/fastembed
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --frozen --no-dev
+
+      - name: Cache embedding model
+        uses: actions/cache@v4
+        with:
+          path: .cache/fastembed
+          key: fastembed-all-MiniLM-L6-v2-v1
+
+      - name: Apply database migrations
+        run: uv run --no-sync jobbot-migrate
+
+      - name: Send digest
+        env:
+          SLOT: ${{ inputs.slot || 'auto' }}
+          ONLY_USER: ${{ inputs.user }}
+          DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+        run: |
+          args=()
+          [[ "$SLOT" != "auto" ]] && args+=(--slot "$SLOT")
+          if [[ -n "$ONLY_USER" ]]; then
+            [[ "$ONLY_USER" =~ ^-?[0-9]+$ ]] || { echo "user must be a numeric chat_id"; exit 2; }
+            args+=(--user "$ONLY_USER")
+          fi
+          [[ "$DRY_RUN" == "true" ]] && args+=(--dry-run)
+          uv run --no-sync jobbot-digest "${args[@]}"
+
+      - name: Alert admin if the workflow itself failed
+        if: failure()
+        run: |
+          [[ -z "$TELEGRAM_BOT_TOKEN" || -z "$ADMIN_CHAT_ID" ]] && exit 0
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${ADMIN_CHAT_ID}" \
+            --data-urlencode "text=⚠️ JobBot digest workflow failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            > /dev/null

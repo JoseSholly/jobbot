@@ -1,0 +1,52 @@
+name: Build profile
+
+# Triggered by the Cloudflare Worker (workflow_dispatch via the GitHub API) whenever a user
+# uploads a CV. Can also be run by hand from the Actions tab.
+on:
+  workflow_dispatch:
+    inputs:
+      chat_id:
+        description: "Telegram chat_id whose uploaded CV to process"
+        required: true
+
+concurrency:
+  group: build-profile-${{ inputs.chat_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      ADMIN_CHAT_ID: ${{ secrets.ADMIN_CHAT_ID }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      CHAT_ID: ${{ inputs.chat_id }}
+    steps:
+      - name: Validate input
+        run: '[[ "$CHAT_ID" =~ ^-?[0-9]+$ ]] || { echo "chat_id must be numeric"; exit 2; }'
+
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --frozen --no-dev
+
+      - name: Build profile from uploaded CV
+        run: uv run --no-sync jobbot-build-profile --chat-id "$CHAT_ID"
+
+      - name: Alert admin on failure
+        if: failure()
+        run: |
+          [[ -z "$TELEGRAM_BOT_TOKEN" || -z "$ADMIN_CHAT_ID" ]] && exit 0
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${ADMIN_CHAT_ID}" \
+            --data-urlencode "text=⚠️ Profile build failed for ${CHAT_ID}: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            > /dev/null
