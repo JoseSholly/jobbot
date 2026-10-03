@@ -41,6 +41,13 @@ curl -X POST https://jobbot.<you>.workers.dev/telegram \
   -d '{"update_id":1,"message":{"message_id":1,"chat":{"id":<ADMIN_CHAT_ID>,"type":"private"},"from":{"id":<ADMIN_CHAT_ID>},"text":"/help"}}'
 ```
 
+## Cron Trigger (on-time digests)
+`wrangler.toml` declares `[triggers] crons = ["0 6 * * *", "0 16 * * *"]`. At those times (UTC) the Worker's `scheduled` handler calls `ScheduleService.triggerDigest`. That service dispatches `digest.yml` with `{slot, trigger: "cloudflare"}`, retrying up to 3 times. If every attempt fails, or `GITHUB_TOKEN` is missing, the admin gets a Telegram alert.
+
+Check that it's registered with `npx wrangler deployments list`, or in the dashboard under Workers → jobbot → Settings → Triggers. Test it locally with `npx wrangler dev --test-scheduled`, then `curl "http://localhost:8787/__scheduled?cron=0+6+*+*+*"`.
+
+The workflow file must exist on the branch named by `GITHUB_REF` (default `main`).
+
 ## Security notes
 - Requests without the right secret header get `401`.
 - Only private chats are handled. Group messages are ignored.

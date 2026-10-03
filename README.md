@@ -15,10 +15,12 @@ A free, serverless Telegram bot that reads each user's CV, finds matching jobs i
                  ▼
    Cloudflare Worker (webhook, TypeScript) ─── workflow_dispatch ──┐
      onboarding · commands · feedback · tailor                    │
+     cron 06:00 & 16:00 UTC → starts the digest on time           │
                  │                                                 ▼
                  ▼                                GitHub Actions (Python, uv)
            Neon Postgres  ◀───────────────────────  build_profile.yml  (on CV upload)
-   users · profiles · sent · feedback · jobs        digest.yml         (cron 06:00 & 16:00 UTC)
+   users · profiles · sent · feedback · jobs        digest.yml         (dispatched by the Worker cron;
+                                                                        GitHub's own cron as backup)
                                                      fetch → normalize → dedupe → embed once
                                                      → per user: filter → score → re-rank → quota → send
 ```
@@ -248,7 +250,7 @@ CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs all of the abov
 | Neon | 0.5 GB storage | a few MB for dozens of users |
 | Gemini free tier | rate-limited per minute and day | 1 call per user per digest + 1 per CV + 1 per ✍ tap. Capped by `max_reason_users_per_run` |
 
-GitHub cron can start 5–30 minutes late. Use **Run workflow** if a digest is missing. A public repo gets unlimited Actions minutes, and no user data lives in the repo.
+GitHub's own cron is often hours late or skipped, so the Worker's free Cron Trigger starts the digest instead, and GitHub's schedule is only a backup. Automated runs pass `--once-per-slot`, so a slot is never delivered twice in a day. If a digest is still missing, use **Run workflow**. A public repo gets unlimited Actions minutes, and no user data lives in the repo.
 
 ---
 

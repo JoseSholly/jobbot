@@ -217,3 +217,26 @@ async def test_all_sources_failing_alerts_admin_and_sends_users_nothing(backend_
     assert notifier.texts_for(ALICE) == []
     assert any("crashed" in t for t in notifier.texts_for(ADMIN))
     assert repos.runs.runs[-1]["status"] == "failed"
+
+
+async def test_once_per_slot_skips_second_trigger_but_not_other_slot(backend_profile):
+    service, repos, notifier = build([FakeSource("fake", backend_jobs())], users(), {ALICE: backend_profile})
+    today = datetime.now(UTC) - timedelta(hours=1)
+    first = await service.run(opts(once_per_slot_since=today))
+    assert first.skipped_reason is None and len(notifier.texts_for(ALICE)) == 1
+
+    again = await service.run(opts(once_per_slot_since=today))
+    assert again.skipped_reason and len(notifier.texts_for(ALICE)) == 1  # no double send
+
+    evening = DigestOptions(slot=Slot.EVENING, send_delay_seconds=0, once_per_slot_since=today)
+    assert (await service.run(evening)).skipped_reason is None
+
+
+async def test_dry_runs_and_failed_runs_do_not_count_as_delivered(backend_profile):
+    service, repos, notifier = build([FakeSource("fake", backend_jobs())], users(), {ALICE: backend_profile})
+    today = datetime.now(UTC) - timedelta(hours=1)
+    await service.run(opts(dry_run=True))
+    assert repos.runs.runs[-1]["status"] == "dry_run"
+    assert not repos.runs.delivered_since("morning", today)
+    report = await service.run(opts(once_per_slot_since=today))
+    assert report.skipped_reason is None and notifier.texts_for(ALICE)

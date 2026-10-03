@@ -11,6 +11,7 @@ import { UserRepository } from "./repositories/users";
 import { CvService } from "./services/cvService";
 import { FeedbackService } from "./services/feedbackService";
 import { ProfileService } from "./services/profileService";
+import { ScheduleService } from "./services/scheduleService";
 import { TailorService } from "./services/tailorService";
 import { UserService } from "./services/userService";
 
@@ -21,6 +22,7 @@ export interface Services {
   cv: CvService;
   feedback: FeedbackService;
   tailor: TailorService;
+  schedule: ScheduleService;
 }
 
 /** Composition root: the only place that wires concrete clients/repos into services. */
@@ -48,5 +50,6 @@ export function buildServices(env: Env, sql: Sql = neonSql(env.DATABASE_URL)): S
     cv: new CvService(userRepo, profileRepo, github, adminChatId),
     feedback: new FeedbackService(new FeedbackRepository(sql), jobRepo),
     tailor: new TailorService(profileRepo, jobRepo, gemini),
+    schedule: new ScheduleService(github, adminChatId),
   };
 }

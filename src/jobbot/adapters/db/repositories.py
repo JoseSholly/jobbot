@@ -245,3 +245,15 @@ class PgRunRepository:
             "UPDATE runs SET status = %s, stats = %s, error = %s, finished_at = now() WHERE id = %s",
             (status, Jsonb(stats), error, run_id),
         )
+
+    def delivered_since(self, slot: str, since: datetime) -> bool:
+        row = (
+            self.db.connection()
+            .execute(
+                "SELECT 1 FROM runs WHERE slot = %s AND status IN ('ok', 'partial') AND started_at >= %s"
+                " LIMIT 1",
+                (slot, since),
+            )
+            .fetchone()
+        )
+        return row is not None

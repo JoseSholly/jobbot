@@ -31,6 +31,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--profile-file", type=Path, help="run without a database for a single local profile.json")
     p.add_argument("--sources", help="comma-separated subset of sources to use (e.g. remotive,jobicy)")
     p.add_argument("--no-reasons", action="store_true", help="skip Gemini match reasons")
+    p.add_argument(
+        "--once-per-slot",
+        action="store_true",
+        help="do nothing if this slot was already delivered today (for schedulers)",
+    )
     p.add_argument("--config", type=Path, help="path to config.yaml")
     p.add_argument("-v", "--verbose", action="store_true")
     return p.parse_args(argv)
@@ -41,7 +46,9 @@ async def run(args: argparse.Namespace) -> int:
     if args.no_reasons:
         settings.raw.setdefault("llm", {})["match_reasons"] = False
     tz = ZoneInfo(settings.digest.get("timezone", "Africa/Lagos"))
-    slot = Slot(args.slot) if args.slot else slot_for(datetime.now(tz))
+    now_local = datetime.now(tz)
+    slot = Slot(args.slot) if args.slot else slot_for(now_local)
+    start_of_day = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
 
     local_profile = None
     if args.profile_file:
@@ -63,6 +70,7 @@ async def run(args: argparse.Namespace) -> int:
         match_reasons=bool(llm_cfg.get("match_reasons", True)),
         max_reason_users=int(llm_cfg.get("max_reason_users_per_run", 50)),
         send_delay_seconds=float(digest_cfg.get("send_delay_seconds", 0.5)),
+        once_per_slot_since=start_of_day if args.once_per_slot else None,
     )
 
     async with Container(
@@ -75,6 +83,9 @@ async def run(args: argparse.Namespace) -> int:
             for chat_id, messages in report.previews.items():
                 for message in messages:
                     await notifier.send(chat_id, message)
+    if report.skipped_reason:
+        print(f"skipped: {report.skipped_reason}")
+        return 0
     print(json.dumps(report.as_stats(), indent=2))
     return 0 if not report.users_failed else 1
 

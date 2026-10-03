@@ -2,6 +2,7 @@ import { buildServices } from "./container";
 import type { Env } from "./env";
 import { routeUpdate } from "./handlers/router";
 import type { TgUpdate } from "./handlers/types";
+import { slotForCron } from "./services/scheduleService";
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -32,5 +33,18 @@ export default {
       routeUpdate(services, update, scheduler).catch((err) => console.error("update failed", err)),
     );
     return new Response("ok");
+  },
+
+  /** Cron Triggers (wrangler.toml [triggers]): start the digest on time. */
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    const services = buildServices(env);
+    const slot = slotForCron(controller.scheduledTime);
+    ctx.waitUntil((async () => {
+      const problems = await services.schedule.triggerDigest(slot);
+      for (const reply of problems) {
+        await services.telegram.send(reply).catch((err) => console.error("alert failed", err));
+      }
+      console.log(problems.length ? `digest ${slot}: dispatch failed` : `digest ${slot}: dispatched`);
+    })());
   },
 } satisfies ExportedHandler<Env>;

@@ -1,9 +1,12 @@
 name: Digest
 
+# Primary trigger: the Cloudflare Worker's cron (worker/wrangler.toml) dispatches this workflow
+# on time at 06:00 and 16:00 UTC. GitHub's own schedule below is a backup: it is often late or
+# skipped. Scheduled and Cloudflare runs pass --once-per-slot, so a slot is never sent twice.
 on:
   schedule:
-    - cron: "0 6 * * *"    # 07:00 WAT (GitHub may start a few minutes late)
-    - cron: "0 16 * * *"   # 17:00 WAT
+    - cron: "0 6 * * *"    # 07:00 WAT (backup)
+    - cron: "0 16 * * *"   # 17:00 WAT (backup)
   workflow_dispatch:
     inputs:
       slot:
@@ -19,6 +22,10 @@ on:
         description: "Print instead of sending"
         type: boolean
         default: false
+      trigger:
+        description: "Who started this run (the Cloudflare cron sends 'cloudflare'; leave as manual)"
+        required: false
+        default: manual
 
 concurrency:
   group: digest
@@ -62,6 +69,7 @@ jobs:
           SLOT: ${{ inputs.slot || 'auto' }}
           ONLY_USER: ${{ inputs.user }}
           DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+          AUTOMATED: ${{ (github.event_name == 'schedule' || inputs.trigger == 'cloudflare') && 'true' || 'false' }}
         run: |
           args=()
           [[ "$SLOT" != "auto" ]] && args+=(--slot "$SLOT")
@@ -70,6 +78,7 @@ jobs:
             args+=(--user "$ONLY_USER")
           fi
           [[ "$DRY_RUN" == "true" ]] && args+=(--dry-run)
+          [[ "$AUTOMATED" == "true" ]] && args+=(--once-per-slot)
           uv run --no-sync jobbot-digest "${args[@]}"
 
       - name: Alert admin if the workflow itself failed

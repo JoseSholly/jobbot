@@ -48,6 +48,9 @@ class DigestOptions:
     max_reason_users: int = 50
     send_delay_seconds: float = 0.5
     notify_when_empty: bool = True
+    # Skip if this slot was already delivered since this moment (start of today, local time).
+    # Lets Cloudflare's cron and GitHub's cron both trigger a slot without double-sending.
+    once_per_slot_since: datetime | None = None
 
 
 @dataclass(slots=True)
@@ -60,6 +63,7 @@ class DigestReport:
     per_source: dict[str, int] = field(default_factory=dict)
     source_errors: dict[str, str] = field(default_factory=dict)
     previews: dict[int, list[OutgoingMessage]] = field(default_factory=dict)
+    skipped_reason: str | None = None
 
     def as_stats(self) -> dict[str, Any]:
         return {
@@ -105,6 +109,11 @@ class DigestService:
     # ------------------------------------------------------------------ public
     async def run(self, opts: DigestOptions) -> DigestReport:
         report = DigestReport()
+        since = opts.once_per_slot_since
+        if since is not None and not opts.dry_run and self.repos.runs.delivered_since(opts.slot.value, since):
+            report.skipped_reason = f"{opts.slot.value} digest already delivered today"
+            log.info(report.skipped_reason)
+            return report
         run_id = self.repos.runs.start(opts.slot.value)
         try:
             await self._run(opts, report)
@@ -112,7 +121,10 @@ class DigestService:
             self.repos.runs.finish(run_id, "failed", report.as_stats(), traceback.format_exc())
             await self.alerts.alert(f"{opts.slot.value} digest crashed", f"{exc!r}")
             raise
-        status = "ok" if not report.users_failed and not report.source_errors else "partial"
+        if opts.dry_run:
+            status = "dry_run"  # never counts as delivered
+        else:
+            status = "ok" if not report.users_failed and not report.source_errors else "partial"
         self.repos.runs.finish(run_id, status, report.as_stats(), None)
         await self._maybe_alert(opts, report)
         return report

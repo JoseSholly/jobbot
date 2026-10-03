@@ -3,7 +3,7 @@
 ## Schedules
 | Workflow | When | Manual run |
 |---|---|---|
-| Digest | 06:00 and 16:00 UTC (07:00 / 17:00 WAT). GitHub may start it 5–30 min late | Actions → Digest → *Run workflow* (slot, single user, dry run) |
+| Digest | 06:00 and 16:00 UTC (07:00 / 17:00 WAT), started by the Worker's Cron Trigger. GitHub's own schedule is a late/unreliable backup, and the second trigger for a slot is skipped (`--once-per-slot`) | Actions → Digest → *Run workflow* (slot, single user, dry run). Manual runs always send |
 | Build profile | Whenever a user uploads a CV (dispatched by the Worker) | Actions → Build profile → *Run workflow* with a chat_id |
 | CI | Every push and PR | n/a |
 

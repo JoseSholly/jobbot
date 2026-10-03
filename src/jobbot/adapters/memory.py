@@ -120,8 +120,14 @@ class MemoryRunRepository:
         self.runs: list[dict[str, Any]] = []
 
     def start(self, slot: str) -> int:
-        self.runs.append({"slot": slot, "status": "running"})
+        self.runs.append({"slot": slot, "status": "running", "started_at": datetime.now(UTC)})
         return len(self.runs)
 
     def finish(self, run_id: int, status: str, stats: dict[str, Any], error: str | None) -> None:
         self.runs[run_id - 1].update(status=status, stats=stats, error=error)
+
+    def delivered_since(self, slot: str, since: datetime) -> bool:
+        return any(
+            r["slot"] == slot and r["status"] in ("ok", "partial") and r["started_at"] >= since
+            for r in self.runs
+        )

@@ -5,6 +5,11 @@ main = "src/index.ts"
 compatibility_date = "2026-09-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Start the digest on time (GitHub's own cron is often late). Times are UTC:
+# 06:00 UTC = 07:00 WAT morning, 16:00 UTC = 17:00 WAT evening.
+[triggers]
+crons = ["0 6 * * *", "0 16 * * *"]
+
 [vars]
 GITHUB_REPO = "JoseSholly/jobbot"   # owner/repo that holds the build_profile workflow
 GITHUB_REF = "main"                 # branch the workflow file lives on (the default branch)

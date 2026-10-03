@@ -72,8 +72,15 @@ def test_users_profiles_sent_feedback_runs(db):
     assert actions[FeedbackAction.DISMISS] == [j2.id]
 
     runs = PgRunRepository(db)
+    from datetime import UTC, datetime, timedelta
+
+    hour_ago = datetime.now(UTC) - timedelta(hours=1)
     run_id = runs.start("morning")
+    assert not runs.delivered_since("morning", hour_ago)  # still running
     runs.finish(run_id, "ok", {"users": 1}, None)
+    assert runs.delivered_since("morning", hour_ago)
+    assert not runs.delivered_since("evening", hour_ago)
+    assert not runs.delivered_since("morning", datetime.now(UTC) + timedelta(minutes=1))
 
     users.delete(1)  # cascades
     assert sent.sent_keys(1) == (set(), set())

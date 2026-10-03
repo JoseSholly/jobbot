@@ -6,10 +6,10 @@
 |---|---|---|
 | **Cloudflare Worker** (`worker/`) | Always on (webhook), TypeScript | Everything interactive: `/start`, invites, approvals, profile commands, CV upload, 💾/✖/✍ buttons |
 | **Build profile** (`.github/workflows/build_profile.yml`) | GitHub Actions, on demand | Download the CV from Telegram → PDF text → profile (Gemini or heuristic) → save → DM the user |
-| **Digest** (`.github/workflows/digest.yml`) | GitHub Actions, cron 06:00 and 16:00 UTC | Fetch jobs once, match per user, send, record |
+| **Digest** (`.github/workflows/digest.yml`) | GitHub Actions, dispatched by the Worker's Cron Trigger at 06:00 and 16:00 UTC (GitHub's own cron is a backup) | Fetch jobs once, match per user, send, record |
 | **Neon Postgres** | Managed | Shared state for both runtimes (`migrations/001_init.sql`) |
 
-Why this split: Telegram needs an always-on HTTPS endpoint for instant replies and button taps, and a Worker does that for free. Embedding models and PDF parsing need real CPU and Python, which GitHub Actions provides for free. The two never call each other directly except for one `workflow_dispatch` (CV uploaded → build profile). Everything else goes through the database.
+Why this split: Telegram needs an always-on HTTPS endpoint for instant replies and button taps, and a Worker does that for free. Embedding models and PDF parsing need real CPU and Python, which GitHub Actions provides for free. The two never call each other directly except through `workflow_dispatch`: CV uploaded → build profile, and the Worker's Cron Trigger → digest (GitHub's own scheduler is unreliable). Everything else goes through the database.
 
 ## Layers (Python)
 
@@ -61,7 +61,7 @@ Services return `Reply` objects instead of calling Telegram, and the router send
 
 **CV upload:** the PDF arrives at the Worker → `profiles.cv_file_id` is set → `POST /repos/:repo/actions/workflows/build_profile.yml/dispatches {chat_id}` → the Action downloads the file via `getFile`, extracts text with pypdf, parses it with Gemini (falling back to the heuristic parser), saves the profile and DMs it.
 
-**Digest:** cron → `jobbot-migrate` (no-op when up to date) → `jobbot-digest` → for each active user with a profile: a message with one row of 💾 ✖ ✍ buttons per job. `callback_data` is `s:<job_id>` (16-hex id, well under Telegram's 64-byte cap).
+**Digest:** Worker cron (06:00/16:00 UTC) dispatches `digest.yml` with `trigger=cloudflare`. GitHub's own schedule fires too, often late. Both are "automated", so they run `jobbot-digest --once-per-slot`, which exits immediately if the `runs` table already has an `ok`/`partial` run for that slot today (Africa/Lagos). Manual runs skip the check. Then `jobbot-migrate` (no-op when up to date) → `jobbot-digest` → for each active user with a profile: a message with one row of 💾 ✖ ✍ buttons per job. `callback_data` is `s:<job_id>` (16-hex id, well under Telegram's 64-byte cap).
 
 **Buttons:** the Worker checks that the job was sent to *this* user (`sent`) before recording feedback or tailoring, so users can't act on arbitrary ids.
 
