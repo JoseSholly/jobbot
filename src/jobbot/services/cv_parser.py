@@ -12,7 +12,7 @@ _LINE_SPLIT = re.compile(r"[\n\r]+")
 _YEARS_RE = re.compile(r"(\d{1,2})\+?\s*(?:years|yrs)", re.IGNORECASE)
 
 
-def extract_skills(text: str, limit: int = 25) -> list[str]:
+def extract_skills(text: str, limit: int = 12) -> list[str]:
     lower = text.lower()
     found = [s for s in SKILLS if contains_term(lower, s)]
 
@@ -68,7 +68,7 @@ def heuristic_profile(cv_text: str) -> Profile:
     text = cv_text or ""
     titles = extract_titles(text)
     skills = extract_skills(text)
-    summary = re.sub(r"\s+", " ", text).strip()[:800]
+    summary = re.sub(r"\s+", " ", text).strip()[:300]
     return Profile(
         target_titles=titles,
         skills=skills,

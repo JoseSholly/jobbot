@@ -15,17 +15,28 @@ log = logging.getLogger(__name__)
 
 API = "https://generativelanguage.googleapis.com/v1beta/models"
 
-CV_PROMPT = """You extract a job-search profile from a CV. Return ONLY JSON with these keys:
-- "target_titles": 3-6 job titles this person should search for (based on experience), strings
-- "skills": up to 25 concrete skills/tools/technologies, most important first
-- "seniority": subset of ["intern","junior","mid","senior","lead"] that fits
-- "exclude_keywords": words that signal a bad fit (e.g. "unpaid", "internship" for experienced people)
-- "summary": 2-4 sentence third-person summary of experience and strengths (used for semantic matching)
-
-CV:
-\"\"\"
-{cv}
-\"\"\""""
+CV_PROMPT = (
+    "You extract a tight job-search profile from a CV. Return ONLY JSON with these keys:\n"
+    '- "target_titles": 3-4 canonical job titles this person should search for. '
+    'No near-duplicates (do not list both "Backend Engineer" and "Senior Backend Engineer" '
+    "— pick one). Prefer titles recruiters actually post.\n"
+    '- "skills": up to 12 core skills, most important first. Include programming languages, '
+    "frameworks, databases, cloud platforms, and major integrations. "
+    "EXCLUDE: test frameworks (pytest, jest), linters/formatters (ruff, prettier, black), "
+    "CI/CD, deployment platforms (Railway, Vercel, Heroku, Fly), "
+    "auth protocol names (JWT, OAuth2), and abstract concepts "
+    "(idempotency, database optimization, REST API design, scalability).\n"
+    '- "seniority": subset of ["intern","junior","mid","senior","lead"] that fits\n'
+    '- "exclude_keywords": words that signal a bad fit '
+    '(e.g. "unpaid", "internship" for experienced people)\n'
+    '- "summary": 1-2 sentence third-person summary of experience and strengths, '
+    "max 300 characters (used for semantic matching)\n"
+    "\n"
+    "CV:\n"
+    '"""\n'
+    "{cv}\n"
+    '"""'
+)
 
 REASONS_PROMPT = """Candidate profile:
 {profile}

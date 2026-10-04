@@ -48,18 +48,28 @@ Unknown tokens are logged and skipped.
 
    URL = "https://example.com/api/jobs"
 
-   def parse(payload: dict) -> list[RawJob]:          # pure: easy to test with a fixture
-       return [RawJob(source="example", url=i["url"], title=i["title"],
-                      company=i.get("company", ""), description=i.get("html", ""),
-                      location=i.get("location", ""), remote=i.get("remote"),
-                      posted_at=parse_date(i.get("published")))
-               for i in payload["jobs"]]
+
+   def parse(payload: dict) -> list[RawJob]:  # pure: easy to test with a fixture
+       return [
+           RawJob(
+               source="example",
+               url=i["url"],
+               title=i["title"],
+               company=i.get("company", ""),
+               description=i.get("html", ""),
+               location=i.get("location", ""),
+               remote=i.get("remote"),
+               posted_at=parse_date(i.get("published")),
+           )
+           for i in payload["jobs"]
+       ]
+
 
    class ExampleSource(BaseSource):
        name = "example"
 
        async def fetch(self, ctx: SearchContext) -> list[RawJob]:
-           return parse(await self.get_json(URL))     # retries + timeouts built in
+           return parse(await self.get_json(URL))  # retries + timeouts built in
    ```
 2. Register it in `adapters/sources/registry.py` (`SOURCE_CLASSES`).
 3. Add `example: {enabled: true}` under `sources:` in `config.yaml`.

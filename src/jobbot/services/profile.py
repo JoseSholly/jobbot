@@ -15,6 +15,34 @@ from jobbot.services.formatting import render_profile
 log = logging.getLogger(__name__)
 
 MAX_CV_CHARS = 20_000
+_MAX_TITLES = 4
+_MAX_SKILLS = 12
+_MAX_SUMMARY_CHARS = 300
+
+
+def _dedup_ci(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for item in items:
+        key = item.strip().lower()
+        if key and key not in seen:
+            seen.add(key)
+            out.append(item.strip())
+    return out
+
+
+def _tighten(p: Profile) -> Profile:
+    summary = p.summary.strip()
+    if len(summary) > _MAX_SUMMARY_CHARS:
+        summary = summary[: _MAX_SUMMARY_CHARS - 1].rstrip() + "…"
+    return replace(
+        p,
+        target_titles=_dedup_ci(p.target_titles)[:_MAX_TITLES],
+        skills=_dedup_ci(p.skills)[:_MAX_SKILLS],
+        seniority=_dedup_ci(p.seniority),
+        exclude_keywords=_dedup_ci(p.exclude_keywords),
+        summary=summary,
+    )
 
 
 class ProfileBuildError(Exception):
@@ -62,7 +90,8 @@ class ProfileService:
             parsed = None
         if parsed is None or not parsed.is_usable:
             return fallback
-        # Fill gaps the LLM left empty from the heuristic result.
+        parsed = _tighten(parsed)
+        # Fill gaps the LLM left empty from the heuristic result (also tightened).
         return replace(
             parsed,
             skills=parsed.skills or fallback.skills,

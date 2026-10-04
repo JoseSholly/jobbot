@@ -3,7 +3,7 @@ import pytest
 from jobbot.adapters.memory import MemoryProfileRepository
 from jobbot.domain.models import Profile
 from jobbot.services.cv_parser import extract_skills, extract_titles, heuristic_profile
-from jobbot.services.profile import ProfileBuildError, ProfileService
+from jobbot.services.profile import ProfileBuildError, ProfileService, _tighten
 from tests.fakes import FakeDownloader, FakeExtractor, FakeLLM, RecordingNotifier
 
 CV = """Jane Doe
@@ -75,6 +75,53 @@ async def test_build_from_upload_notifies_user():
     await service.build_from_upload(7)
     assert repo.get(7).skills
     assert "Profile ready" in notifier.texts_for(7)[0]
+
+
+def test_tighten_caps_titles_and_skills():
+    overfull = Profile(
+        target_titles=[f"Title {i}" for i in range(10)],
+        skills=[f"Skill{i}" for i in range(30)],
+        summary="short",
+    )
+    tight = _tighten(overfull)
+    assert len(tight.target_titles) == 4
+    assert tight.target_titles == ["Title 0", "Title 1", "Title 2", "Title 3"]
+    assert len(tight.skills) == 12
+    assert tight.skills[0] == "Skill0"
+
+
+def test_tighten_dedup_case_insensitive():
+    tight = _tighten(Profile(skills=["Python", "python", "PYTHON", "Django", " django "]))
+    assert tight.skills == ["Python", "Django"]
+
+
+def test_tighten_truncates_long_summary():
+    long = "x" * 1000
+    tight = _tighten(Profile(summary=long))
+    assert len(tight.summary) <= 300
+    assert tight.summary.endswith("…")
+
+
+async def test_parse_tightens_overfull_llm_output():
+    overfull = Profile(
+        target_titles=[f"Role {i}" for i in range(8)],
+        skills=["Python", "python", "Django"] + [f"Skill{i}" for i in range(20)],
+        summary="LLM summary that is intentionally long. " * 20,
+    )
+    service = ProfileService(MemoryProfileRepository(), llm=FakeLLM(overfull))
+    profile = await service.parse(CV)
+    assert len(profile.target_titles) == 4
+    assert len(profile.skills) == 12
+    assert "python" not in profile.skills  # dedup kept first-cased "Python"
+    assert len(profile.summary) <= 300
+
+
+def test_heuristic_skills_capped_at_12():
+    skill_dump = (
+        "Python Django Flask FastAPI PostgreSQL MySQL Redis MongoDB "
+        "Docker Kubernetes AWS GCP Azure Terraform Ansible"
+    )
+    assert len(extract_skills(skill_dump)) <= 12
 
 
 async def test_build_from_upload_reports_unreadable_pdf():
