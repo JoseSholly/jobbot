@@ -68,6 +68,16 @@ sources:
   pythonjobs:     {enabled: true}   # python.org job board (Python-only roles)
   workingnomads:  {enabled: true}   # remote jobs feed, strong in development
   hnhiring:       {enabled: true}   # Hacker News monthly "Who is hiring?" (remote posts only)
+  # Nigerian job boards through the RSS feeds they publish (all jobs tagged Nigeria).
+  # A feed can be a direct RSS/Atom URL, or a page listing feeds plus the link text to follow.
+  ngfeeds:
+    enabled: true
+    feeds:
+      - name: myjobmag
+        url: https://www.myjobmag.com/feeds/
+        link_text: Detailed RSS
+      - name: hotnigerianjobs
+        url: https://www.hotnigerianjobs.com/feed/rss.xml
   # Scrapers: check robots.txt / terms before enabling. Isolated: if one breaks, the run continues.
   myjobmag:       {enabled: false, pages_per_keyword: 1}
   jobberman:      {enabled: false, pages_per_keyword: 1}

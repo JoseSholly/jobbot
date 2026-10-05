@@ -12,6 +12,7 @@
 | Python.org Job Board | `pythonjobs.py` | RSS | none | global, Python-only | on |
 | Working Nomads | `workingnomads.py` | JSON feed | none | global remote | on |
 | HN "Who is hiring?" | `hnhiring.py` | Algolia HN API | none | global, remote posts only | on |
+| Nigerian board feeds (MyJobMag, HotNigerianJobs, …) | `ngfeeds.py` | RSS / Atom published by the boards | none | **Nigeria** | on |
 | Greenhouse / Lever / Ashby | `ats.py` | public board JSON | none | per company | on (list in config) |
 | MyJobMag | `myjobmag.py` | HTML scraper | none | **Nigeria** | **off** |
 | Jobberman | `jobberman.py` | HTML scraper | none | **Nigeria** | **off** |
@@ -24,6 +25,20 @@ Notes
 - **Adzuna** is not used because it doesn't cover Nigeria.
 - **LinkedIn** is not used (terms of service, and brittle).
 - **Isolation.** Each source runs in its own try/except. A failure shows up in the run's stats and in the admin alert, and never stops the run.
+
+## Nigerian board feeds
+`ngfeeds` reads the RSS/Atom feeds Nigerian job boards publish for syndication. Every job is tagged Nigeria, and the city (Lagos, Abuja, …) or "Remote" is picked up when the post mentions it. Add boards in `config.yaml`:
+```yaml
+ngfeeds:
+  enabled: true
+  feeds:
+    - name: myjobmag                     # page listing feeds -> follow the link with this text
+      url: https://www.myjobmag.com/feeds/
+      link_text: Detailed RSS
+    - name: hotnigerianjobs              # direct feed URL
+      url: https://www.hotnigerianjobs.com/feed/rss.xml
+```
+Each feed is isolated: a broken one is logged and skipped. Requests are spaced by `http.scraper_delay_seconds`. These feeds weren't reachable from the build environment, so check the first run's log for lines like `ngfeeds myjobmag: 40 jobs`.
 
 ## The Nigerian scrapers
 MyJobMag and Jobberman have no public API. The scrapers:

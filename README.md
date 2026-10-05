@@ -3,7 +3,7 @@
 A free, serverless Telegram bot that reads each user's CV, finds matching jobs in Nigeria and worldwide, and sends **10 jobs at 07:00 and 10 at 17:00 (WAT)**, so 20 a day. It is multi-user, invite-only, and costs **$0** to run.
 
 - **Matching:** a semantic match between your CV and each job (local `all-MiniLM-L6-v2` embeddings), plus skill overlap, title fit and recency.
-- **Sources:** Remotive, RemoteOK, Himalayas, Arbeitnow, Jobicy (with per-skill searches), We Work Remotely, Working Nomads, the Python.org job board, Hacker News "Who is hiring?", Jooble (Nigeria), Greenhouse/Lever/Ashby company boards, and optional MyJobMag and Jobberman scrapers.
+- **Sources:** Remotive, RemoteOK, Himalayas, Arbeitnow, Jobicy (with per-skill searches), We Work Remotely, Working Nomads, the Python.org job board, Hacker News "Who is hiring?", Jooble (Nigeria), Nigerian board feeds (MyJobMag, HotNigerianJobs), Greenhouse/Lever/Ashby company boards, and optional MyJobMag and Jobberman scrapers.
 - **Mix:** 4 Nigerian and 6 international jobs per digest by default. Each user can change this with `/split`.
 - **No repeats:** a job is never sent to the same person twice, even when it appears on several boards.
 - **Buttons under every job:** 💾 save · ✖ not for me (future digests re-rank away from it) · ✍ tailored CV bullets (Gemini).

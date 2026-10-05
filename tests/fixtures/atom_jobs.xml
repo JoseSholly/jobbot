@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Jobs</title>
+<entry>
+  <title>AI Engineer at Abuja Labs</title>
+  <link href="https://jobs.example.ng/ai-engineer"/>
+  <published>2026-10-04T08:00:00+01:00</published>
+  <summary>LLMs, Python. Abuja office.</summary>
+</entry>
+</feed>

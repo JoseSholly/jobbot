@@ -13,6 +13,7 @@ from jobbot.adapters.sources.jobberman import JobbermanSource
 from jobbot.adapters.sources.jobicy import JobicySource
 from jobbot.adapters.sources.jooble import JoobleSource
 from jobbot.adapters.sources.myjobmag import MyJobMagSource
+from jobbot.adapters.sources.ngfeeds import NigerianFeedsSource
 from jobbot.adapters.sources.pythonjobs import PythonJobsSource
 from jobbot.adapters.sources.remoteok import RemoteOKSource
 from jobbot.adapters.sources.remotive import RemotiveSource
@@ -34,8 +35,9 @@ SOURCE_CLASSES: dict[str, type[BaseSource]] = {
     "pythonjobs": PythonJobsSource,
     "workingnomads": WorkingNomadsSource,
     "hnhiring": HNHiringSource,
+    "ngfeeds": NigerianFeedsSource,
 }
-SCRAPERS = {"myjobmag", "jobberman"}
+SCRAPERS = {"myjobmag", "jobberman", "ngfeeds"}  # Nigerian sites: polite delay between requests
 
 
 def build_sources(
