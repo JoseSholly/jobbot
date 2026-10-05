@@ -9,6 +9,8 @@ from difflib import SequenceMatcher
 import numpy as np
 
 from jobbot.domain.models import Job, Profile, ScoreBreakdown, ScoredJob
+from jobbot.domain.skills import SENIORITY_WORDS
+from jobbot.domain.synonyms import variants
 from jobbot.domain.text import contains_term, normalize_key, tokens
 
 DEFAULT_WEIGHTS = {"semantic": 0.60, "skills": 0.25, "title": 0.10, "recency": 0.05}
@@ -48,7 +50,7 @@ def skill_score(job: Job, skills: list[str], saturation: int) -> float:
     if not skills:
         return 0.0
     haystack = f"{job.title} {job.description}".lower()
-    matched = sum(1 for s in skills if contains_term(haystack, s))
+    matched = sum(1 for s in skills if any(contains_term(haystack, v) for v in variants(s)))
     return min(1.0, matched / max(1, min(saturation, len(skills))))
 
 
@@ -69,6 +71,27 @@ def title_score(job_title: str, target_titles: list[str]) -> float:
         ratio = SequenceMatcher(None, jt, tt).ratio()
         best = max(best, 0.7 * overlap + 0.3 * ratio)
     return min(1.0, best)
+
+
+RELATED_TITLE_WEIGHT = 0.8
+
+
+def title_levels(job_title: str) -> set[str]:
+    lower = job_title.lower().replace("lead generation", " ").replace("lead gen", " ")
+    return {level for word, level in SENIORITY_WORDS.items() if contains_term(lower, word)}
+
+
+def profile_title_score(job_title: str, profile: Profile) -> float:
+    """Best match over target titles (full weight) and related titles (0.8), halved when the
+    job title names a level the user doesn't hold (e.g. "Director" for a mid-level person)."""
+    score = max(
+        title_score(job_title, profile.target_titles),
+        RELATED_TITLE_WEIGHT * title_score(job_title, profile.related_titles),
+    )
+    levels = title_levels(job_title)
+    if levels and profile.seniority and not levels & {s.lower() for s in profile.seniority}:
+        score *= 0.5
+    return score
 
 
 def recency_score(posted_at: datetime | None, now: datetime, max_age_days: int) -> float:
@@ -107,7 +130,7 @@ class Scorer:
         breakdown = ScoreBreakdown(
             semantic=semantic,
             skills=skill_score(job, profile.skills, cfg.skill_saturation),
-            title=title_score(job.title, profile.target_titles),
+            title=profile_title_score(job.title, profile),
             recency=recency_score(job.posted_at, now, cfg.max_age_days),
         )
         return ScoredJob(job=job, score=breakdown.total(cfg.weights), breakdown=breakdown)

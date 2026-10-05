@@ -4,6 +4,7 @@ Modes:
   --chat-id N                 download the CV that user sent the bot, save to DB, DM them
   --pdf cv.pdf --out p.json   local only: write a hand-editable profile.json (no DB)
   --pdf cv.pdf --chat-id N    parse a local PDF and save it as user N's profile in the DB
+  --all                       re-parse every user's stored CV (after parser upgrades)
 """
 
 from __future__ import annotations
@@ -26,11 +27,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--chat-id", type=int)
     p.add_argument("--pdf", type=Path)
     p.add_argument("--out", type=Path, help="write profile JSON here (local mode)")
+    p.add_argument(
+        "--all",
+        action="store_true",
+        help="re-parse every user's stored CV with the current parser and DM them",
+    )
     p.add_argument("--config", type=Path)
     p.add_argument("-v", "--verbose", action="store_true")
     args = p.parse_args(argv)
-    if not args.chat_id and not args.pdf:
-        p.error("give --chat-id and/or --pdf")
+    if not args.chat_id and not args.pdf and not args.all:
+        p.error("give --chat-id and/or --pdf, or --all")
     return args
 
 
@@ -52,6 +58,10 @@ async def run(args: argparse.Namespace) -> int:
             return 0
 
         service = container.profile_service()
+        if args.all:
+            results = await service.rebuild_all()
+            print(json.dumps({str(k): v for k, v in results.items()}, indent=2))
+            return 0 if all(v == "ok" for v in results.values()) else 1
         try:
             if args.pdf:
                 profile = await service.build_from_text(args.chat_id, pdf_to_text(args.pdf.read_bytes()))

@@ -21,6 +21,10 @@ export interface Profile {
   countries_ok: string[];
   exclude_keywords: string[];
   summary: string;
+  /** Broader titles boards actually post ("Python Developer", "Virtual Assistant"). */
+  related_titles: string[];
+  /** Industries, e.g. fintech, e-commerce. */
+  domains: string[];
 }
 
 export const DEFAULT_PROFILE: Profile = {
@@ -31,6 +35,8 @@ export const DEFAULT_PROFILE: Profile = {
   countries_ok: ["Nigeria", "Worldwide", "Africa", "EMEA"],
   exclude_keywords: [],
   summary: "",
+  related_titles: [],
+  domains: [],
 };
 
 export interface Job {

@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from jobbot.domain.models import Profile
+from jobbot.domain.roles import related_titles_for
 from jobbot.domain.skills import SENIORITY_WORDS, SKILLS, TITLE_WORDS
 from jobbot.domain.text import contains_term
 
@@ -71,6 +72,7 @@ def heuristic_profile(cv_text: str) -> Profile:
     summary = re.sub(r"\s+", " ", text).strip()[:300]
     return Profile(
         target_titles=titles,
+        related_titles=related_titles_for(titles, skills),
         skills=skills,
         seniority=infer_seniority(text, titles),
         summary=summary,

@@ -49,6 +49,10 @@ def test_users_profiles_sent_feedback_runs(db):
     profiles.save(1, Profile(skills=["Python"], target_titles=["Dev"]), cv_text="cv")
     assert profiles.get(1).skills == ["Python"]
     assert profiles.get_cv_file_id(1) == "FILE1"
+    assert profiles.get_cv_text(1) == "cv"
+    assert profiles.list_with_cv() == [1]  # bob has no CV
+    profiles.save(1, Profile(skills=["Python"], related_titles=["Dev"], domains=["fintech"]))
+    assert profiles.get(1).related_titles == ["Dev"] and profiles.get_cv_text(1) == "cv"
 
     jobs = PgJobRepository(db)
     j1, j2 = job("Python Developer", "A"), job("Go Developer", "B")

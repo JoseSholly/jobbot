@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import replace
 
 from jobbot.domain.models import Profile
+from jobbot.domain.roles import related_titles_for
+from jobbot.domain.synonyms import canonical
 from jobbot.interfaces.ml import LLMClient
 from jobbot.interfaces.notifier import FileDownloader, Notifier, OutgoingMessage
 from jobbot.interfaces.repositories import ProfileRepository
@@ -18,6 +21,8 @@ MAX_CV_CHARS = 20_000
 _MAX_TITLES = 4
 _MAX_SKILLS = 12
 _MAX_SUMMARY_CHARS = 300
+_MAX_RELATED = 6
+_MAX_DOMAINS = 4
 
 
 def _dedup_ci(items: list[str]) -> list[str]:
@@ -35,10 +40,15 @@ def _tighten(p: Profile) -> Profile:
     summary = p.summary.strip()
     if len(summary) > _MAX_SUMMARY_CHARS:
         summary = summary[: _MAX_SUMMARY_CHARS - 1].rstrip() + "…"
+    titles = _dedup_ci(p.target_titles)[:_MAX_TITLES]
+    taken = {t.lower() for t in titles}
+    related = [t for t in _dedup_ci(p.related_titles) if t.lower() not in taken][:_MAX_RELATED]
     return replace(
         p,
-        target_titles=_dedup_ci(p.target_titles)[:_MAX_TITLES],
-        skills=_dedup_ci(p.skills)[:_MAX_SKILLS],
+        target_titles=titles,
+        related_titles=related,
+        domains=_dedup_ci(p.domains)[:_MAX_DOMAINS],
+        skills=_dedup_ci([canonical(s) for s in p.skills])[:_MAX_SKILLS],
         seniority=_dedup_ci(p.seniority),
         exclude_keywords=_dedup_ci(p.exclude_keywords),
         summary=summary,
@@ -92,10 +102,13 @@ class ProfileService:
             return fallback
         parsed = _tighten(parsed)
         # Fill gaps the LLM left empty from the heuristic result (also tightened).
+        titles = parsed.target_titles or fallback.target_titles
+        skills = parsed.skills or fallback.skills
         return replace(
             parsed,
-            skills=parsed.skills or fallback.skills,
-            target_titles=parsed.target_titles or fallback.target_titles,
+            skills=skills,
+            target_titles=titles,
+            related_titles=parsed.related_titles or related_titles_for(titles, skills),
             seniority=parsed.seniority or fallback.seniority,
             summary=parsed.summary or fallback.summary,
         )
@@ -146,6 +159,26 @@ class ProfileService:
             ),
         )
         return profile
+
+    async def rebuild_all(self, delay_seconds: float = 6.0) -> dict[int, str]:
+        """Re-parse every stored CV with the current parser (no re-upload needed).
+
+        Keeps each user's location/remote/exclusion preferences and DMs them the new profile.
+        The delay keeps Gemini's free-tier per-minute limit happy.
+        """
+        results: dict[int, str] = {}
+        for index, chat_id in enumerate(self.profiles.list_with_cv()):
+            if index and delay_seconds:
+                await asyncio.sleep(delay_seconds)
+            cv_text = self.profiles.get_cv_text(chat_id) or ""
+            try:
+                profile = await self.build_from_text(chat_id, cv_text)
+                await self._notify(chat_id, render_profile(profile, header="🔄 Profile updated"))
+                results[chat_id] = "ok"
+            except Exception as exc:  # one bad CV must not stop the rest
+                log.warning("rebuild failed for %s: %s", chat_id, exc)
+                results[chat_id] = f"failed: {exc}"[:200]
+        return results
 
     async def _notify(self, chat_id: int, message: OutgoingMessage) -> None:
         if self.notifier:

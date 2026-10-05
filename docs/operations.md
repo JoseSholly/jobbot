@@ -28,6 +28,7 @@
 | List users | `/users` | `uv run jobbot-admin users` |
 | Approve / block | buttons, `/approve ID`, `/block ID` | `uv run jobbot-admin approve ID` / `block ID` |
 | Rebuild someone's profile | n/a | Actions → Build profile, or `uv run jobbot-build-profile --chat-id ID` |
+| Re-parse **everyone's** stored CV (after a parser upgrade) | n/a | Actions → Build profile with chat_id `all`, or `uv run jobbot-build-profile --all`. Keeps location/remote/exclude preferences and DMs each user |
 | Resend a digest to one person | n/a | Actions → Digest → user = ID |
 
 ## Tuning relevance

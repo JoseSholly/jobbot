@@ -9,6 +9,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from jobbot.domain.models import Job, Profile
+from jobbot.domain.roles import remotive_categories_for
 from jobbot.interfaces.sources import JobSource, SearchContext
 from jobbot.services.dedupe import dedupe
 from jobbot.services.normalize import normalize_all
@@ -46,8 +47,12 @@ def _most_common(values: list[list[str]], limit: int) -> list[str]:
 def build_search_context(profiles: list[Profile], max_keywords: int, max_skills: int = 4) -> SearchContext:
     """What query-style sources search for: users' titles and their most important skills."""
     return SearchContext(
-        keywords=_most_common([p.target_titles for p in profiles], max_keywords),
+        # target + related titles: related ones are the broad wording boards actually use
+        keywords=_most_common([p.all_titles for p in profiles], max_keywords),
         skills=_most_common([p.skills for p in profiles], max_skills),
+        categories=_most_common(
+            [remotive_categories_for(p.all_titles, p.skills) for p in profiles], limit=10
+        ),
     )
 
 

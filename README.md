@@ -122,6 +122,8 @@ curl "https://api.telegram.org/bot<TOKEN>/setWebhook" \
 | *send a PDF* | Upload or replace your CV; your profile is rebuilt automatically |
 | `/profile` | Show your matching profile |
 | `/titles a, b` | Set the job titles to search for |
+| `/related add a, b` · `remove` · `set` | Broader titles to also match and search, e.g. "Software Developer", "Virtual Assistant". Filled in from your CV |
+| `/domains fintech, e-commerce` | Industries you've worked in (helps matching) |
 | `/skills add a, b` · `remove a` · `set …` | Edit skills |
 | `/exclude add a` · `remove a` · `set …` | Words that disqualify a job (e.g. `unpaid`, `PHP`) |
 | `/locations Nigeria, Worldwide, Africa, EMEA` | Where you can work. Remote jobs restricted elsewhere are skipped |

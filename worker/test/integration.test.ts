@@ -145,6 +145,8 @@ describe.skipIf(!DSN)("worker against Postgres", () => {
     await run(msg(ADMIN, "/skills add Python, Django"));
     await run(msg(ADMIN, "/skills remove django"));
     await run(msg(ADMIN, "/exclude add unpaid"));
+    await run(msg(ADMIN, "/related Software Developer, Web Developer"));
+    await run(msg(ADMIN, "/domains fintech, e-commerce"));
     await run(msg(ADMIN, "/remote off"));
     await run(msg(ADMIN, "/split 2 8"));
     expect(telegram.textsFor(ADMIN).at(-1)).toContain("2 Nigerian and 8 international");
@@ -152,6 +154,7 @@ describe.skipIf(!DSN)("worker against Postgres", () => {
     expect(rows[0].data).toMatchObject({
       target_titles: ["Backend Engineer", "Python Developer"], skills: ["Python"],
       exclude_keywords: ["unpaid"], remote_ok: false,
+      related_titles: ["Software Developer", "Web Developer"], domains: ["fintech", "e-commerce"],
     });
     const quotas = await pool!.query("SELECT ng_quota, global_quota FROM users WHERE chat_id = $1", [ADMIN]);
     expect(quotas.rows[0]).toEqual({ ng_quota: 2, global_quota: 8 });

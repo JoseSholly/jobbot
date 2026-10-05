@@ -93,6 +93,26 @@ class PgProfileRepository:
         )
         return row["cv_file_id"] if row else None
 
+    def get_cv_text(self, chat_id: int) -> str | None:
+        row = (
+            self.db.connection()
+            .execute("SELECT cv_text FROM profiles WHERE chat_id = %s", (chat_id,))
+            .fetchone()
+        )
+        return row["cv_text"] if row else None
+
+    def list_with_cv(self) -> list[int]:
+        rows = (
+            self.db.connection()
+            .execute(
+                "SELECT p.chat_id FROM profiles p JOIN users u USING (chat_id)"
+                " WHERE p.cv_text IS NOT NULL AND p.cv_text <> '' AND u.status IN ('active', 'paused')"
+                " ORDER BY p.chat_id"
+            )
+            .fetchall()
+        )
+        return [r["chat_id"] for r in rows]
+
     def save(self, chat_id: int, profile: Profile, cv_text: str | None = None) -> None:
         self.db.connection().execute(
             """

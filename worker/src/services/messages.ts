@@ -10,6 +10,8 @@ Send your CV as a <b>PDF</b>. I'll build your profile in about 2 minutes.
 /profile — view your profile
 /titles — set target job titles
    <code>/titles Backend Engineer, Python Developer</code>
+/related — broader titles to also match
+   <code>/related add Software Developer, Web Developer</code>
 /skills — <code>add</code>, <code>remove</code>, or <code>set</code>
    <code>/skills add Docker, AWS</code>
 /exclude — filter out keywords
@@ -17,6 +19,7 @@ Send your CV as a <b>PDF</b>. I'll build your profile in about 2 minutes.
 /locations — where you can work
    <code>/locations Nigeria, Worldwide, EMEA</code>
 /seniority — <code>/seniority mid, senior</code>
+/domains — industries, e.g. <code>/domains fintech, e-commerce</code>
 /remote — <code>/remote on</code> or <code>/remote off</code>
 /summary — a 2-3 sentence intro about you
 
@@ -49,11 +52,13 @@ export function renderProfile(p: Profile, header = "Your profile"): string {
   return (
     `<b>${esc(header)}</b>\n\n` +
     `<b>Titles:</b> ${list(p.target_titles)}\n` +
+    `<b>Also matching:</b> ${list(p.related_titles ?? [])}\n` +
     `<b>Skills:</b> ${list(p.skills)}\n` +
     `<b>Seniority:</b> ${list(p.seniority)}\n` +
     `<b>Remote OK:</b> ${p.remote_ok ? "yes" : "no"}\n` +
     `<b>Locations:</b> ${list(p.countries_ok)}\n` +
     `<b>Exclude:</b> ${list(p.exclude_keywords)}\n` +
+    `<b>Industries:</b> ${list(p.domains ?? [])}\n` +
     `<b>Summary:</b> ${p.summary ? esc(truncate(p.summary, 600)) : "<i>none</i>"}`
   );
 }

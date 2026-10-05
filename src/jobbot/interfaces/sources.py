@@ -18,6 +18,8 @@ class SearchContext:
 
     keywords: list[str] = field(default_factory=list)  # job titles, e.g. "Backend Engineer"
     skills: list[str] = field(default_factory=list)  # top skills, e.g. "Python", "Django"
+    # Job categories the users work in (Remotive-style slugs: software-dev, design, writing, ...)
+    categories: list[str] = field(default_factory=list)
     nigeria_location: str = "Nigeria"
 
 

@@ -4,12 +4,21 @@ import { withDefaults } from "../repositories/profiles";
 import { parseList } from "../util/text";
 import { renderProfile } from "./messages";
 
-export type ListField = "target_titles" | "skills" | "exclude_keywords" | "countries_ok" | "seniority";
+export type ListField =
+  | "target_titles"
+  | "related_titles"
+  | "skills"
+  | "exclude_keywords"
+  | "countries_ok"
+  | "seniority"
+  | "domains";
 export type ListOp = "add" | "remove" | "set";
 
 const SENIORITY = ["intern", "junior", "mid", "senior", "lead"];
 const MAX_ITEMS: Record<ListField, number> = {
   target_titles: 8,
+  related_titles: 8,
+  domains: 6,
   skills: 40,
   exclude_keywords: 40,
   countries_ok: 15,
@@ -96,6 +105,8 @@ export class ProfileService {
 function usage(field: ListField): string {
   const cmd = {
     target_titles: "titles",
+    related_titles: "related",
+    domains: "domains",
     skills: "skills",
     exclude_keywords: "exclude",
     countries_ok: "locations",

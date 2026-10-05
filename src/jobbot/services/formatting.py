@@ -79,13 +79,15 @@ def render_profile(profile: Profile, header: str = "Your profile") -> OutgoingMe
     text = (
         f"<b>{esc(header)}</b>\n\n"
         f"<b>Titles:</b> {fmt(profile.target_titles)}\n"
+        f"<b>Also matching:</b> {fmt(profile.related_titles)}\n"
         f"<b>Skills:</b> {fmt(profile.skills)}\n"
         f"<b>Seniority:</b> {fmt(profile.seniority)}\n"
         f"<b>Remote OK:</b> {'yes' if profile.remote_ok else 'no'}\n"
         f"<b>Locations:</b> {fmt(profile.countries_ok)}\n"
         f"<b>Exclude:</b> {fmt(profile.exclude_keywords)}\n"
+        f"<b>Industries:</b> {fmt(profile.domains)}\n"
         f"<b>Summary:</b> {esc(truncate(profile.summary, 600)) or '<i>none</i>'}\n\n"
-        "Edit with /titles, /skills, /exclude, /locations, /seniority, /summary. "
+        "Edit with /titles, /related, /skills, /exclude, /locations, /seniority, /domains, /summary. "
         "Send /help for examples."
     )
     return OutgoingMessage(text=text)

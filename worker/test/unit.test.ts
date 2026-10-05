@@ -48,3 +48,14 @@ describe("text utils", () => {
     expect(prompt.length).toBeLessThan(7000);
   });
 });
+
+describe("related titles and domains", () => {
+  it("edits the new list fields and keeps old profiles working", () => {
+    const old = { ...DEFAULT_PROFILE } as Partial<typeof DEFAULT_PROFILE>;
+    delete old.related_titles;
+    let p = applyListEdit({ ...DEFAULT_PROFILE, ...old }, "related_titles", "add", ["Virtual Assistant"]);
+    p = applyListEdit(p, "related_titles", "add", ["virtual assistant", "Executive Assistant"]);
+    expect(p.related_titles).toEqual(["Virtual Assistant", "Executive Assistant"]);
+    expect(applyListEdit(p, "domains", "set", ["fintech", "e-commerce"]).domains).toEqual(["fintech", "e-commerce"]);
+  });
+});

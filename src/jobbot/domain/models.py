@@ -81,12 +81,28 @@ class Profile:
     countries_ok: list[str] = field(default_factory=lambda: ["Nigeria", "Worldwide", "Africa", "EMEA"])
     exclude_keywords: list[str] = field(default_factory=list)
     summary: str = ""
+    # Broader/adjacent titles recruiters actually post ("Python Developer", "Virtual Assistant").
+    # Used to widen searches and title matching beyond target_titles.
+    related_titles: list[str] = field(default_factory=list)
+    domains: list[str] = field(default_factory=list)  # industries, e.g. fintech, e-commerce
+
+    @property
+    def all_titles(self) -> list[str]:
+        seen: set[str] = set()
+        out = []
+        for title in [*self.target_titles, *self.related_titles]:
+            if title.lower() not in seen:
+                seen.add(title.lower())
+                out.append(title)
+        return out
 
     @property
     def embedding_text(self) -> str:
-        parts = [self.summary, "Roles: " + ", ".join(self.target_titles)]
+        parts = [self.summary, "Roles: " + ", ".join(self.all_titles)]
         if self.skills:
             parts.append("Skills: " + ", ".join(self.skills))
+        if self.domains:
+            parts.append("Industries: " + ", ".join(self.domains))
         return ". ".join(p for p in parts if p.strip())
 
     def to_dict(self) -> dict:
@@ -98,6 +114,8 @@ class Profile:
             "countries_ok": self.countries_ok,
             "exclude_keywords": self.exclude_keywords,
             "summary": self.summary,
+            "related_titles": self.related_titles,
+            "domains": self.domains,
         }
 
     @classmethod
@@ -119,6 +137,8 @@ class Profile:
             countries_ok=str_list("countries_ok", default.countries_ok),
             exclude_keywords=str_list("exclude_keywords", []),
             summary=str(data.get("summary") or ""),
+            related_titles=str_list("related_titles", []),
+            domains=str_list("domains", []),
         )
 
     @property

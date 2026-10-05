@@ -31,7 +31,13 @@ class RemotiveSource(BaseSource):
     async def fetch(self, ctx: SearchContext) -> list[RawJob]:
         # Remotive asks for at most a few calls a day, so query a small list of categories
         # rather than one request per keyword. Category slugs: remotive.com/api/remote-jobs/categories
-        categories = self.options.get("categories") or [None]
+        # Categories the current users work in (design, writing, ...), then configured defaults.
+        max_categories = int(self.options.get("max_categories", 3))
+        categories: list[str | None] = []
+        for category in [*ctx.categories, *(self.options.get("categories") or [])]:
+            if category not in categories:
+                categories.append(category)
+        categories = categories[:max_categories] or [None]
         jobs: list[RawJob] = []
         for category in categories:
             params = {"category": category} if category else {}

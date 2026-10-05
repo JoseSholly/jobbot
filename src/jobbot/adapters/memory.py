@@ -53,6 +53,12 @@ class MemoryProfileRepository:
     def get_cv_file_id(self, chat_id: int) -> str | None:
         return self.cv_file_ids.get(chat_id)
 
+    def get_cv_text(self, chat_id: int) -> str | None:
+        return self.cv_texts.get(chat_id)
+
+    def list_with_cv(self) -> list[int]:
+        return sorted(c for c, text in self.cv_texts.items() if text)
+
     def save(self, chat_id: int, profile: Profile, cv_text: str | None = None) -> None:
         self.profiles[chat_id] = profile
         if cv_text is not None:

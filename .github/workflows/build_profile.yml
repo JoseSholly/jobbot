@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       chat_id:
-        description: "Telegram chat_id whose uploaded CV to process"
+        description: "Telegram chat_id whose uploaded CV to process, or 'all' to re-parse every stored CV"
         required: true
 
 concurrency:
@@ -19,7 +19,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       ADMIN_CHAT_ID: ${{ secrets.ADMIN_CHAT_ID }}
@@ -28,7 +28,7 @@ jobs:
       CHAT_ID: ${{ inputs.chat_id }}
     steps:
       - name: Validate input
-        run: '[[ "$CHAT_ID" =~ ^-?[0-9]+$ ]] || { echo "chat_id must be numeric"; exit 2; }'
+        run: '[[ "$CHAT_ID" =~ ^-?[0-9]+$ || "$CHAT_ID" == "all" ]] || { echo "chat_id must be numeric or all"; exit 2; }'
 
       - uses: actions/checkout@v4
 
@@ -40,7 +40,12 @@ jobs:
         run: uv sync --frozen --no-dev
 
       - name: Build profile from uploaded CV
-        run: uv run --no-sync jobbot-build-profile --chat-id "$CHAT_ID"
+        run: |
+          if [[ "$CHAT_ID" == "all" ]]; then
+            uv run --no-sync jobbot-build-profile --all
+          else
+            uv run --no-sync jobbot-build-profile --chat-id "$CHAT_ID"
+          fi
 
       - name: Alert admin on failure
         if: failure()

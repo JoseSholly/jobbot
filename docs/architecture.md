@@ -49,7 +49,7 @@ Services return `Reply` objects instead of calling Telegram, and the router send
 |---|---|---|---|
 | `users` | Worker (onboarding, `/split`, `/pause`), Python (auto-pause on block) | both | `status`: pending/active/paused/blocked |
 | `invites` | Worker `/invite`, `jobbot-admin invite` | Worker | Redeemed atomically (`uses < max_uses`, not expired) |
-| `profiles` | Worker (`cv_file_id`, edits), Python (parsed `data`, `cv_text`) | both | `data` JSONB matches `Profile.to_dict()` |
+| `profiles` | Worker (`cv_file_id`, edits), Python (parsed `data`, `cv_text`) | both | `data` JSONB matches `Profile.to_dict()`: `target_titles`, `related_titles`, `skills`, `seniority`, `domains`, `remote_ok`, `countries_ok`, `exclude_keywords`, `summary` |
 | `jobs` | Python (only jobs actually sent) | Worker (Tailor, `/saved`), Python (re-rank embeddings) | Pruned after 90 days unless saved |
 | `sent` | Python | Python, Worker (authorizes button taps) | Per-user dedupe by `job_id` and `dedupe_key` |
 | `feedback` | Worker (💾/✖) | Python re-ranker | One row per user per job, latest action wins |
@@ -76,3 +76,18 @@ Services return `Reply` objects instead of calling Telegram, and the router send
 | User blocked the bot | Telegram 403 → user set to `paused`, others unaffected |
 | Telegram 429 | Waits for `retry_after`, then retries |
 | Workflow crash | `if: failure()` step sends the admin a link to the run |
+
+## CV parsing
+The parser is profession-neutral: it handles developers, designers, content creators, virtual assistants and others.
+
+- **Gemini (when `GEMINI_API_KEY` is set).** The prompt is in `adapters/gemini.py`, and a `responseSchema` (`CV_SCHEMA`) guarantees the JSON shape. Temperature is 0.
+- **Heuristic fallback.** `services/cv_parser.py` uses the vocabulary in `domain/skills.py` and the role families in `domain/roles.py`.
+- **Post-processing** (`services/profile.py`): drops duplicate titles, caps list sizes, canonicalises skills through `domain/synonyms.py`, and fills `related_titles` from role families if the model left it empty.
+
+How the profile is used:
+- **Searching:** query-style sources search `target_titles` + `related_titles`. Remotive categories follow the users' role families.
+- **Matching:**
+  - Skills match any alias (DRF ⇄ Django REST Framework, Adobe Photoshop ⇄ Photoshop).
+  - Title score is the best of target titles (×1.0) and related titles (×0.8).
+  - The title score is halved when a job title names a level the user doesn't hold.
+

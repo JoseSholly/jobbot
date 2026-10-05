@@ -43,8 +43,9 @@ http:
   scraper_delay_seconds: 2.0    # politeness delay between scraper requests
 
 sources:
-  remotive:                     # Remotive asks for few calls/day: 2 categories x 2 runs = 4
+  remotive:                     # Remotive asks for few calls a day, so keep max_categories small
     enabled: true
+    max_categories: 3             # users' own fields first (design, writing, ...), then these
     categories: [software-dev, data]   # data = data science / AI / ML
   remoteok:       {enabled: true}
   himalayas:      {enabled: true, max_pages: 10}
