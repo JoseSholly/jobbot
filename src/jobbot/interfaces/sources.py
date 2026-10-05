@@ -16,7 +16,8 @@ class SearchContext:
     (Jooble, Nigerian boards) use ``keywords`` to build searches.
     """
 
-    keywords: list[str] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)  # job titles, e.g. "Backend Engineer"
+    skills: list[str] = field(default_factory=list)  # top skills, e.g. "Python", "Django"
     nigeria_location: str = "Nigeria"
 
 

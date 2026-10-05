@@ -51,6 +51,7 @@ There are three places for settings:
 | `llm.match_reasons` | true | Turns the one-line "why it matches" on or off |
 | `llm.max_reason_users_per_run` | 50 | Users per run who get reasons (free-tier rate limits) |
 | `search.max_keywords` | 12 | Distinct job titles (across all users) sent to query-based sources |
+| `search.max_skills` | 4 | Top skills (across all users) used for skill searches (Jobicy tags) |
 | `http.timeout_seconds` | 30 | Per request |
 | `http.user_agent` | `JobBot/0.1 (+repo url)` | Sent to every source |
 | `http.scraper_delay_seconds` | 2.0 | Delay between scraper requests |
@@ -64,7 +65,9 @@ Every source has `enabled`. Source-specific options:
 | `arbeitnow` | `max_pages` |
 | `jobicy` | `count` (max 100) |
 | `weworkremotely` | `feeds`: list of category RSS URLs |
-| `jooble` | `pages_per_keyword` |
+| `remotive` | `categories`: Remotive category slugs (default `software-dev`, `data`) |
+| `jobicy` | `max_tags`: how many top skills to search for |
+| `jooble` | `host` (country site matching your key, e.g. `ng.jooble.org`), `pages_per_keyword` |
 | `myjobmag`, `jobberman` | `pages_per_keyword`. **Off by default**, see [sources.md](sources.md) |
 | `ats` | `greenhouse`, `lever`, `ashby`: lists of company board tokens |
 

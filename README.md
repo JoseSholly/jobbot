@@ -3,7 +3,7 @@
 A free, serverless Telegram bot that reads each user's CV, finds matching jobs in Nigeria and worldwide, and sends **10 jobs at 07:00 and 10 at 17:00 (WAT)**, so 20 a day. It is multi-user, invite-only, and costs **$0** to run.
 
 - **Matching:** a semantic match between your CV and each job (local `all-MiniLM-L6-v2` embeddings), plus skill overlap, title fit and recency.
-- **Sources:** Remotive, RemoteOK, Himalayas, Arbeitnow, Jobicy, We Work Remotely, Jooble (Nigeria), Greenhouse/Lever/Ashby company boards, and optional MyJobMag and Jobberman scrapers.
+- **Sources:** Remotive, RemoteOK, Himalayas, Arbeitnow, Jobicy (with per-skill searches), We Work Remotely, Working Nomads, the Python.org job board, Hacker News "Who is hiring?", Jooble (Nigeria), Greenhouse/Lever/Ashby company boards, and optional MyJobMag and Jobberman scrapers.
 - **Mix:** 4 Nigerian and 6 international jobs per digest by default. Each user can change this with `/split`.
 - **No repeats:** a job is never sent to the same person twice, even when it appears on several boards.
 - **Buttons under every job:** 💾 save · ✖ not for me (future digests re-rank away from it) · ✍ tailored CV bullets (Gemini).
@@ -54,7 +54,7 @@ All of these are free.
 | 3 | **Neon Postgres** database | Stores users, profiles and history | [neon.tech](https://neon.tech) → new project → copy the **pooled** connection string |
 | 4 | **Cloudflare account** | Hosts the webhook Worker | [dash.cloudflare.com](https://dash.cloudflare.com) (free plan) |
 | 5 | **GitHub fine-grained token** | Lets the Worker start the profile-build workflow | GitHub → Settings → Developer settings → Fine-grained tokens → this repo only → **Actions: Read and write** |
-| 6 | **Jooble API key** | Main source of Nigerian jobs | [jooble.org/api/about](https://jooble.org/api/about) |
+| 6 | **Jooble API key** | Main source of Nigerian jobs. Keys are per country, so get it from the **Nigeria** site | [ng.jooble.org/api/about](https://ng.jooble.org/api/about) |
 | 7 | **Gemini API key** *(optional, recommended)* | Better CV parsing, "why it matches" lines, ✍ tailored bullets | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 
 Tools: [uv](https://docs.astral.sh/uv/getting-started/installation/) (Python), Node.js 20+ (for deploying the Worker), git.

@@ -34,7 +34,8 @@ llm:
   max_reason_users_per_run: 50  # stay inside the Gemini free-tier rate limit
 
 search:
-  max_keywords: 12              # cap on distinct search terms sent to query-style sources
+  max_keywords: 12              # cap on distinct job titles sent to query-style sources
+  max_skills: 4                 # top skills (e.g. Python, Django) used for skill searches
 
 http:
   timeout_seconds: 30
@@ -42,11 +43,13 @@ http:
   scraper_delay_seconds: 2.0    # politeness delay between scraper requests
 
 sources:
-  remotive:       {enabled: true}
+  remotive:                     # Remotive asks for few calls/day: 2 categories x 2 runs = 4
+    enabled: true
+    categories: [software-dev, data]   # data = data science / AI / ML
   remoteok:       {enabled: true}
   himalayas:      {enabled: true, max_pages: 10}
   arbeitnow:      {enabled: true, max_pages: 3}
-  jobicy:         {enabled: true, count: 100}
+  jobicy:         {enabled: true, count: 100, max_tags: 3}   # + one search per top skill
   weworkremotely:
     enabled: true
     feeds:
@@ -58,7 +61,13 @@ sources:
       - https://weworkremotely.com/categories/remote-product-jobs.rss
       - https://weworkremotely.com/categories/remote-customer-support-jobs.rss
       - https://weworkremotely.com/categories/remote-sales-and-marketing-jobs.rss
-  jooble:         {enabled: true, pages_per_keyword: 1}   # needs JOOBLE_API_KEY
+  jooble:                       # needs JOOBLE_API_KEY *for this host* (keys are per country)
+    enabled: true
+    host: ng.jooble.org         # Nigeria; get the key at https://ng.jooble.org/api/about
+    pages_per_keyword: 1
+  pythonjobs:     {enabled: true}   # python.org job board (Python-only roles)
+  workingnomads:  {enabled: true}   # remote jobs feed, strong in development
+  hnhiring:       {enabled: true}   # Hacker News monthly "Who is hiring?" (remote posts only)
   # Scrapers: check robots.txt / terms before enabling. Isolated: if one breaks, the run continues.
   myjobmag:       {enabled: false, pages_per_keyword: 1}
   jobberman:      {enabled: false, pages_per_keyword: 1}
@@ -67,6 +76,6 @@ sources:
     # Public job-board JSON of hand-picked companies. The value is the board token from the
     # company's careers URL, e.g. boards.greenhouse.io/<token>, jobs.lever.co/<token>,
     # jobs.ashbyhq.com/<token>. Unknown tokens are logged and skipped.
-    greenhouse: [gitlab]
+    greenhouse: [gitlab, canonical]   # both hire remote worldwide, lots of Python
     lever: []
     ashby: []

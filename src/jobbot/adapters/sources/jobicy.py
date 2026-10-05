@@ -32,5 +32,11 @@ class JobicySource(BaseSource):
     name = "jobicy"
 
     async def fetch(self, ctx: SearchContext) -> list[RawJob]:
-        payload = await self.get_json(URL, params={"count": int(self.options.get("count", 100))})
-        return parse(payload)
+        count = int(self.options.get("count", 100))
+        jobs = parse(await self.get_json(URL, params={"count": count}))  # latest, all fields
+        # Then one search per top skill (e.g. python, django), which reaches older postings.
+        for skill in ctx.skills[: int(self.options.get("max_tags", 3))]:
+            tag = skill.strip().lower()
+            if 3 <= len(tag) <= 50:
+                jobs.extend(parse(await self.get_json(URL, params={"count": 50, "tag": tag})))
+        return jobs

@@ -27,13 +27,47 @@ def reject_reason(job: Job, profile: Profile, ctx: FilterContext) -> str | None:
         return "dismissed"
     if job.posted_at is not None and job.posted_at < ctx.now - timedelta(days=ctx.max_age_days):
         return "too_old"
-    haystack = f"{job.title} {job.company} {job.description}".lower()
-    for keyword in profile.exclude_keywords:
-        if contains_term(haystack, keyword):
-            return "excluded_keyword"
+    if excluded(job, profile.exclude_keywords):
+        return "excluded_keyword"
     if not location_ok(job, profile):
         return "location"
     return None
+
+
+# Seniority words appear in almost every description ("you'll mentor junior engineers",
+# "no internship experience needed"), so for these only the job *title* counts.
+LEVEL_WORDS = {
+    "intern",
+    "internship",
+    "junior",
+    "jr",
+    "graduate",
+    "entry-level",
+    "entry level",
+    "trainee",
+    "apprentice",
+    "apprenticeship",
+    "senior",
+    "sr",
+    "lead",
+    "principal",
+    "staff",
+    "mid",
+    "mid-level",
+    "head",
+    "director",
+    "student",
+}
+
+
+def excluded(job: Job, keywords: list[str]) -> bool:
+    title = job.title.lower()
+    everything = f"{job.title} {job.company} {job.description}".lower()
+    for keyword in keywords:
+        haystack = title if keyword.strip().lower() in LEVEL_WORDS else everything
+        if contains_term(haystack, keyword):
+            return True
+    return False
 
 
 def location_ok(job: Job, profile: Profile) -> bool:

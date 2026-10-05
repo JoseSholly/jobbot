@@ -57,3 +57,19 @@ def test_location_rules(backend_profile):
 def test_remote_not_ok_rejects_global_remote(backend_profile):
     backend_profile.remote_ok = False
     assert reject_reason(job(posted_at=NOW), backend_profile, ctx()) == "location"
+
+
+def test_level_words_only_exclude_by_title(backend_profile):
+    backend_profile.exclude_keywords = ["junior", "intern", "internship", "graduate", "unpaid"]
+    mentor = job(
+        "Senior Backend Engineer",
+        posted_at=NOW,
+        description="You will mentor junior engineers and run our internship program.",
+    )
+    assert reject_reason(mentor, backend_profile, ctx()) is None
+    assert (
+        reject_reason(job("Junior Python Developer", posted_at=NOW), backend_profile, ctx())
+        == "excluded_keyword"
+    )
+    unpaid = job("Backend Engineer", posted_at=NOW, description="This is an unpaid role.")
+    assert reject_reason(unpaid, backend_profile, ctx()) == "excluded_keyword"

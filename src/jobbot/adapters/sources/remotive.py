@@ -29,4 +29,11 @@ class RemotiveSource(BaseSource):
     name = "remotive"
 
     async def fetch(self, ctx: SearchContext) -> list[RawJob]:
-        return parse(await self.get_json(URL))
+        # Remotive asks for at most a few calls a day, so query a small list of categories
+        # rather than one request per keyword. Category slugs: remotive.com/api/remote-jobs/categories
+        categories = self.options.get("categories") or [None]
+        jobs: list[RawJob] = []
+        for category in categories:
+            params = {"category": category} if category else {}
+            jobs.extend(parse(await self.get_json(URL, params=params)))
+        return jobs

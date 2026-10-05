@@ -12,7 +12,9 @@ from jobbot.interfaces.sources import SearchContext
 
 log = logging.getLogger(__name__)
 
-URL = "https://jooble.org/api/{key}"
+# Jooble API keys are per country site: a key from jooble.org only returns US jobs.
+# For Nigeria, request a key at https://ng.jooble.org/api/about and set `host: ng.jooble.org`.
+URL = "https://{host}/api/{key}"
 
 
 def parse(payload: dict) -> list[RawJob]:
@@ -47,17 +49,24 @@ class JoobleSource(BaseSource):
             log.info("jooble: no JOOBLE_API_KEY; skipping")
             return []
         pages = int(self.options.get("pages_per_keyword", 1))
+        host = self.options.get("host") or "jooble.org"
         jobs: list[RawJob] = []
         for keyword in ctx.keywords or ["developer"]:
             for page in range(1, pages + 1):
                 resp = await request(
                     self.client,
                     "POST",
-                    URL.format(key=self.api_key),
+                    URL.format(host=host, key=self.api_key),
                     json={"keywords": keyword, "location": ctx.nigeria_location, "page": str(page)},
                 )
-                batch = parse(resp.json())
+                payload = resp.json()
+                batch = parse(payload)
+                log.info("jooble %r: totalCount=%s, got %d", keyword, payload.get("totalCount"), len(batch))
                 jobs.extend(batch)
                 if not batch:
                     break
+        if not jobs:
+            log.warning(
+                "jooble returned no jobs. Is JOOBLE_API_KEY a key for %s (keys are per country)?", host
+            )
         return jobs

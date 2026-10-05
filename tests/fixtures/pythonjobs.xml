@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"><channel><title>Python Job Board</title>
+<item>
+  <title>Senior Django Developer, Acme Analytics</title>
+  <link>https://www.python.org/jobs/7901/</link>
+  <description>&lt;p&gt;Location: Remote (worldwide)&lt;/p&gt;&lt;p&gt;Build Django and FastAPI services.&lt;/p&gt;</description>
+  <pubDate>Fri, 02 Oct 2026 10:00:00 +0000</pubDate>
+  <guid>https://www.python.org/jobs/7901/</guid>
+</item>
+<item>
+  <title>Python Engineer, Onsite Co</title>
+  <link>https://www.python.org/jobs/7902/</link>
+  <description>&lt;p&gt;Location: Berlin, Germany&lt;/p&gt;&lt;p&gt;Office based.&lt;/p&gt;</description>
+  <pubDate>Thu, 01 Oct 2026 10:00:00 +0000</pubDate>
+</item>
+</channel></rss>

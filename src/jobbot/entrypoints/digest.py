@@ -64,6 +64,7 @@ async def run(args: argparse.Namespace) -> int:
         dry_run=args.dry_run,
         only_chat_id=args.user,
         max_keywords=int(settings.raw.get("search", {}).get("max_keywords", 12)),
+        max_skills=int(settings.raw.get("search", {}).get("max_skills", 4)),
         max_age_days=int(digest_cfg.get("max_age_days", 14)),
         sent_retention_days=int(retention.get("sent_days", 60)),
         jobs_retention_days=int(retention.get("jobs_days", 90)),

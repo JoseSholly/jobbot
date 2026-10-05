@@ -240,3 +240,13 @@ async def test_dry_runs_and_failed_runs_do_not_count_as_delivered(backend_profil
     assert not repos.runs.delivered_since("morning", today)
     report = await service.run(opts(once_per_slot_since=today))
     assert report.skipped_reason is None and notifier.texts_for(ALICE)
+
+
+async def test_report_includes_per_user_funnel(backend_profile):
+    service, repos, _ = build([FakeSource("fake", backend_jobs())], users(), {ALICE: backend_profile})
+    report = await service.run(opts())
+    funnel = report.funnels[ALICE]
+    assert funnel["total"] == 15  # 16 fetched, 1 dropped as too old before matching
+    assert funnel["rejected"].get("location", 0) == 0
+    assert funnel["above_min"] >= 10 and len(funnel["top_scores"]) == 5
+    assert "funnels" in repos.runs.runs[-1]["stats"]

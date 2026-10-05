@@ -8,13 +8,16 @@ from jobbot.adapters.sources.arbeitnow import ArbeitnowSource
 from jobbot.adapters.sources.ats import ATSSource
 from jobbot.adapters.sources.base import BaseSource
 from jobbot.adapters.sources.himalayas import HimalayasSource
+from jobbot.adapters.sources.hnhiring import HNHiringSource
 from jobbot.adapters.sources.jobberman import JobbermanSource
 from jobbot.adapters.sources.jobicy import JobicySource
 from jobbot.adapters.sources.jooble import JoobleSource
 from jobbot.adapters.sources.myjobmag import MyJobMagSource
+from jobbot.adapters.sources.pythonjobs import PythonJobsSource
 from jobbot.adapters.sources.remoteok import RemoteOKSource
 from jobbot.adapters.sources.remotive import RemotiveSource
 from jobbot.adapters.sources.weworkremotely import WeWorkRemotelySource
+from jobbot.adapters.sources.workingnomads import WorkingNomadsSource
 from jobbot.config import Settings
 
 SOURCE_CLASSES: dict[str, type[BaseSource]] = {
@@ -28,6 +31,9 @@ SOURCE_CLASSES: dict[str, type[BaseSource]] = {
     "myjobmag": MyJobMagSource,
     "jobberman": JobbermanSource,
     "ats": ATSSource,
+    "pythonjobs": PythonJobsSource,
+    "workingnomads": WorkingNomadsSource,
+    "hnhiring": HNHiringSource,
 }
 SCRAPERS = {"myjobmag", "jobberman"}
 

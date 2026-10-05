@@ -34,7 +34,7 @@ This number is `ADMIN_CHAT_ID`.
    This is `DATABASE_URL`, used by both Python and the Worker.
 
 ## 4. API keys
-- **Jooble:** fill in the form at [jooble.org/api/about](https://jooble.org/api/about). The key arrives by email. Set it as `JOOBLE_API_KEY`.
+- **Jooble:** fill in the form on the **Nigeria** site, [ng.jooble.org/api/about](https://ng.jooble.org/api/about). Keys are per country, and a key from jooble.org only returns US jobs. The key arrives by email. Set it as `JOOBLE_API_KEY`.
 - **Gemini (optional):** go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey), click **Create API key**, and set it as `GEMINI_API_KEY`.
 
 ## 5. Local install and database bootstrap

@@ -29,7 +29,7 @@ from jobbot.interfaces.repositories import (
 from jobbot.services.alerts import AlertService
 from jobbot.services.formatting import render_digest, render_no_matches
 from jobbot.services.ingestion import IngestionService, build_search_context
-from jobbot.services.matching import MatchingService, UserHistory
+from jobbot.services.matching import Funnel, MatchingService, UserHistory
 from jobbot.services.normalize import utcnow
 
 log = logging.getLogger(__name__)
@@ -41,6 +41,7 @@ class DigestOptions:
     dry_run: bool = False
     only_chat_id: int | None = None
     max_keywords: int = 12
+    max_skills: int = 4
     max_age_days: int = 14
     sent_retention_days: int = 60
     jobs_retention_days: int = 90
@@ -64,6 +65,7 @@ class DigestReport:
     source_errors: dict[str, str] = field(default_factory=dict)
     previews: dict[int, list[OutgoingMessage]] = field(default_factory=dict)
     skipped_reason: str | None = None
+    funnels: dict[int, dict] = field(default_factory=dict)
 
     def as_stats(self) -> dict[str, Any]:
         return {
@@ -74,6 +76,7 @@ class DigestReport:
             "jobs_ingested": self.jobs_ingested,
             "per_source": self.per_source,
             "source_errors": self.source_errors,
+            "funnels": {str(k): v for k, v in self.funnels.items()},
         }
 
 
@@ -138,7 +141,7 @@ class DigestService:
             log.info("no active users with a profile; nothing to do")
             return
 
-        ctx = build_search_context([p for _, p in audience], opts.max_keywords)
+        ctx = build_search_context([p for _, p in audience], opts.max_keywords, opts.max_skills)
         ingested = await self.ingestion.ingest(ctx)
         report.per_source, report.source_errors = ingested.per_source, ingested.errors
         if ingested.all_failed:
@@ -155,7 +158,10 @@ class DigestService:
         reasons_budget = opts.max_reason_users if opts.match_reasons else 0
         for user, profile in audience:
             try:
-                picked = self._match_user(user, profile, jobs, job_vectors, now)
+                funnel = Funnel()
+                picked = self._match_user(user, profile, jobs, job_vectors, now, funnel)
+                report.funnels[user.chat_id] = funnel.as_dict()
+                log.info("user %s funnel: %s", user.chat_id, funnel.as_dict())
                 if picked and self.llm and reasons_budget > 0:
                     reasons_budget -= 1
                     await self._add_reasons(profile, picked)
@@ -217,11 +223,11 @@ class DigestService:
 
         return UserHistory(sent_ids, sent_keys, saved, dismissed, vecs(saved), vecs(dismissed))
 
-    def _match_user(self, user, profile, jobs, job_vectors, now) -> list[ScoredJob]:
+    def _match_user(self, user, profile, jobs, job_vectors, now, funnel=None) -> list[ScoredJob]:
         history = self._history(user.chat_id)
         profile_vecs = self._embed([profile.embedding_text]) if job_vectors else None
         profile_vec = profile_vecs[0] if profile_vecs else None
-        ranked = self.matching.rank(jobs, profile, history, now, profile_vec, job_vectors)
+        ranked = self.matching.rank(jobs, profile, history, now, profile_vec, job_vectors, funnel)
         return self.matching.pick(ranked, user.ng_quota, user.global_quota)
 
     async def _add_reasons(self, profile: Profile, picked: list[ScoredJob]) -> None:
